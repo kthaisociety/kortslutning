@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: kortslutning
+          POSTGRES_PASSWORD: kortslutning
+          POSTGRES_DB: kortslutning_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kortslutning -d kortslutning_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      TEST_DB_URL: postgres://kortslutning:kortslutning@localhost:5432/kortslutning_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # No app environment variables here, exactly like the Docker build.
+      - run: npm run build
+      - name: Smoke test the standalone server
+        run: npm run smoke
+        env:
+          DB_URL: postgres://kortslutning:kortslutning@localhost:5432/kortslutning_test
+          GOOGLE_CLIENT_ID: ci-placeholder
+          GOOGLE_CLIENT_SECRET: ci-placeholder
+          BETTER_AUTH_SECRET: ci-placeholder-secret-at-least-32-characters
+          APP_URL: http://localhost:3000
+          SHORT_URL: http://short.localhost:3000
+          ROOT_REDIRECT_URL: https://kthais.com
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build --tag kortslutning:ci .
