@@ -156,9 +156,13 @@ function used by the hook.
 ### 4.2 Sessions
 
 - Stored in Postgres; httpOnly cookie scoped to the app host.
-- Better Auth defaults: 7-day expiry, rolling refresh.
+- Fixed 7-day expiry with no rolling refresh (`session.disableSessionRefresh`):
+  members sign in again once a week. Rolling refresh was rejected in the final
+  review because it would let a removed member who keeps using the app stay
+  signed in indefinitely.
 - Offboarding: a removed Workspace account cannot sign in again; any live session
-  expires within 7 days.
+  expires within 7 days. For immediate revocation, delete the user row (README),
+  which cascades to their sessions and accounts.
 
 ### 4.3 Route protection
 

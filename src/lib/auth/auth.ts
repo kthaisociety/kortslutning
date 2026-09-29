@@ -1,17 +1,21 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { getDb } from "@/lib/db";
+import { getDb, type Database } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { getEnv } from "@/lib/env";
+import { getEnv, type Env } from "@/lib/env";
 import { ALLOWED_EMAIL_DOMAIN, isAllowedEmail } from "./domain";
 
-function createAuth() {
-  const env = getEnv();
+export function createAuth(db: Database, env: Env) {
   return betterAuth({
     baseURL: env.appUrl,
     secret: env.betterAuthSecret,
-    database: drizzleAdapter(getDb(), { provider: "pg", schema }),
+    database: drizzleAdapter(db, { provider: "pg", schema }),
+    session: {
+      // Hard 7-day expiry (Better Auth's default length) instead of rolling refresh, so someone
+      // removed from the kthais.com Workspace loses access within a week even if they keep using the app.
+      disableSessionRefresh: true,
+    },
     socialProviders: {
       google: {
         clientId: env.googleClientId,
@@ -40,6 +44,6 @@ let auth: Auth | undefined;
 
 /** Created on first use: `next build` runs without the environment variables it needs. */
 export function getAuth(): Auth {
-  auth ??= createAuth();
+  auth ??= createAuth(getDb(), getEnv());
   return auth;
 }
