@@ -79,7 +79,8 @@ are derived from `SHORT_URL` and `APP_URL`.
 
 The short host's `www.` form (e.g. `www.ktha.is`) is an alias: it gets exactly
 the short-host rows above, and destinations on it are rejected as loops
-(derived automatically as `shortHostAliases`; skipped if it equals the app host).
+(derived automatically as `shortHostAliases`). `APP_URL` on that `www.` host is
+rejected at startup, so the alias never shadows the dashboard.
 
 Any host other than the short hosts is treated as the app host, so health checks
 and reverse-proxy host variations do not break the app. The proxy matcher

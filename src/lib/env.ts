@@ -48,6 +48,10 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
   if (app.host === short.host) {
     throw configError(["SHORT_URL: must use a different host than APP_URL"]);
   }
+  const wwwAlias = `www.${short.host}`;
+  if (app.host === wwwAlias) {
+    throw configError([`APP_URL: must not be ${wwwAlias}, the www alias of SHORT_URL`]);
+  }
   return {
     dbUrl: values.DB_URL,
     googleClientId: values.GOOGLE_CLIENT_ID,
@@ -57,8 +61,7 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
     appHost: app.host,
     shortUrl: short.origin,
     shortHost: short.host,
-    // www. is an alias of the short domain unless it is where the dashboard lives.
-    shortHostAliases: [`www.${short.host}`].filter((host) => host !== app.host),
+    shortHostAliases: [wwwAlias],
     rootRedirectUrl: new URL(values.ROOT_REDIRECT_URL).href,
   };
 }

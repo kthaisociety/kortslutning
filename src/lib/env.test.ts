@@ -32,9 +32,10 @@ describe("parseEnv", () => {
     expect(env.shortHostAliases).toEqual(["www.short.localhost:3000"]);
   });
 
-  it("skips the www alias when it is the app host", () => {
-    const env = parseEnv({ ...valid, APP_URL: "https://www.ktha.is" });
-    expect(env.shortHostAliases).toEqual([]);
+  it("rejects APP_URL on the www form of SHORT_URL, which is always a short-link alias", () => {
+    expect(() => parseEnv({ ...valid, APP_URL: "https://www.ktha.is" })).toThrow(
+      /APP_URL: must not be www\.ktha\.is, the www alias of SHORT_URL/,
+    );
   });
 
   it("normalizes URLs to lowercase origins without trailing slashes", () => {
