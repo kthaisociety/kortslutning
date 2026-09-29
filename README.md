@@ -2,7 +2,7 @@
 
 The URL shortener for KTH AI Society.
 
-- **`ktha.is/<slug>`** is public and redirects visitors (HTTP 307) to the link's destination.
+- **`ktha.is/<slug>`** is public and redirects visitors (HTTP 307) to the link's destination. `www.ktha.is` is an alias and behaves exactly the same.
 - **`app.ktha.is`** is the dashboard. Anyone with an `@kthais.com` Google account can sign in and create, edit, delete and download QR codes for short links. Every member can manage every link; the dashboard records who created and last changed each one.
 
 One Next.js app serves both hostnames and decides what to do from the request's `Host` header.
@@ -82,8 +82,8 @@ docker build -t kortslutning .
 docker run -p 3000:3000 --env-file /etc/kortslutning/production.env kortslutning   # keep this file outside the repository
 ```
 
-- **DNS:** point both `ktha.is` and `app.ktha.is` at the container, or at the reverse proxy in front of it.
-- **Reverse proxy:** pass the original `Host` header through unchanged; routing depends on it. Terminate TLS for both names.
+- **DNS:** point `ktha.is`, `www.ktha.is` and `app.ktha.is` at the container, or at the reverse proxy in front of it. The `www.` form of `SHORT_URL`'s host is always treated as the short domain.
+- **Reverse proxy:** pass the original `Host` header through unchanged; routing depends on it. Terminate TLS for all three names.
 - **`HOSTNAME`:** keep the Dockerfile's `HOSTNAME=0.0.0.0`. With a loopback value such as `127.0.0.1`, Next.js treats the app's internal rewrites as external requests and **every short link returns 404**.
 - **Database:** PostgreSQL 14 or newer. Migrations run automatically at startup, so run a single instance (or make sure only one starts at a time).
 - **Offboarding:** sessions last 7 days and are not extended, so someone removed from the kthais.com Workspace loses access within a week. To revoke access immediately, delete their user row (this also deletes their sessions; their links stay, without an author):

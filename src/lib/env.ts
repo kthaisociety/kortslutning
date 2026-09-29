@@ -28,6 +28,8 @@ export interface Env {
   shortUrl: string;
   /** Short-link host (with port, if any), lowercase, e.g. "ktha.is". */
   shortHost: string;
+  /** Hosts that behave exactly like shortHost: its www. form, e.g. ["www.ktha.is"]. */
+  shortHostAliases: string[];
   rootRedirectUrl: string;
 }
 
@@ -55,6 +57,8 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
     appHost: app.host,
     shortUrl: short.origin,
     shortHost: short.host,
+    // www. is an alias of the short domain unless it is where the dashboard lives.
+    shortHostAliases: [`www.${short.host}`].filter((host) => host !== app.host),
     rootRedirectUrl: new URL(values.ROOT_REDIRECT_URL).href,
   };
 }

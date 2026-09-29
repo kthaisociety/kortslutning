@@ -74,7 +74,14 @@ describe("parseTargetUrl", () => {
     },
   );
 
-  it.each(["https://ktha.is/other", "https://KTHA.IS/other", "https://ktha.is./other", "http://ktha.is:8080/other"])(
+  it.each([
+    "https://ktha.is/other",
+    "https://KTHA.IS/other",
+    "https://ktha.is./other",
+    "http://ktha.is:8080/other",
+    "https://www.ktha.is/other",
+    "https://WWW.ktha.is./other",
+  ])(
     "rejects %j, which points back at the short domain",
     (raw) => {
       expect(parseTargetUrl(raw, shortUrl)).toEqual({ ok: false, error: "Links can't point to ktha.is itself." });

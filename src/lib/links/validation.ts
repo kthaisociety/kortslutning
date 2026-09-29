@@ -44,7 +44,9 @@ export function parseTargetUrl(raw: string, shortUrl: string): FieldResult<strin
   }
 
   const shortHostname = new URL(shortUrl).hostname;
-  if (url.hostname.replace(/\.$/, "") === shortHostname) {
+  // The www. alias routes like the short domain too (see shortHostAliases in src/lib/env.ts).
+  const hostname = url.hostname.replace(/\.$/, "");
+  if (hostname === shortHostname || hostname === `www.${shortHostname}`) {
     return { ok: false, error: `Links can't point to ${shortHostname} itself.` };
   }
 

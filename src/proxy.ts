@@ -8,7 +8,7 @@ const NOT_FOUND_PATH = "/__not-found";
 export function proxy(request: NextRequest) {
   const env = getEnv();
   const decision = routeRequest(request.headers.get("host"), request.nextUrl.pathname, {
-    shortHost: env.shortHost,
+    shortHosts: [env.shortHost, ...env.shortHostAliases],
     rootRedirectUrl: env.rootRedirectUrl,
   });
 
