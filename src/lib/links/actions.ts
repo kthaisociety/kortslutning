@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { getEnv } from "@/lib/env";
-import { createLink, type FieldErrors } from "./service";
+import { createLink, removeLink, updateLink, type FieldErrors } from "./service";
 
 export interface LinkFormState {
   status: "idle" | "success" | "error";
@@ -35,4 +36,42 @@ export async function createLinkAction(_previous: LinkFormState, formData: FormD
     console.error("createLinkAction failed", error);
     return { status: "error", message: GENERIC_ERROR, values };
   }
+}
+
+export async function updateLinkAction(
+  slug: string,
+  _previous: LinkFormState,
+  formData: FormData,
+): Promise<LinkFormState> {
+  const user = await requireUser();
+  const values = { slug, targetUrl: readField(formData, "targetUrl") };
+  try {
+    const result = await updateLink(getDb(), {
+      userId: user.id,
+      slug,
+      targetUrl: values.targetUrl,
+      shortUrl: getEnv().shortUrl,
+    });
+    if (!result.ok) return { status: "error", message: result.message, fieldErrors: result.fieldErrors, values };
+    revalidatePath("/");
+    revalidatePath(`/links/${slug}`);
+    return { status: "success", message: "Saved." };
+  } catch (error) {
+    console.error("updateLinkAction failed", error);
+    return { status: "error", message: GENERIC_ERROR, values };
+  }
+}
+
+export async function deleteLinkAction(slug: string): Promise<LinkFormState> {
+  await requireUser();
+  let result;
+  try {
+    result = await removeLink(getDb(), slug);
+  } catch (error) {
+    console.error("deleteLinkAction failed", error);
+    return { status: "error", message: GENERIC_ERROR };
+  }
+  revalidatePath("/");
+  if (!result.ok) return { status: "error", message: result.message };
+  redirect("/"); // Outside try: redirect() works by throwing.
 }
