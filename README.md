@@ -79,13 +79,15 @@ The image is built from the `Dockerfile` (Next.js standalone output, Node.js 22)
 
 ```bash
 docker build -t kortslutning .
-docker run -p 3000:3000 --env-file production.env kortslutning
+docker run -p 3000:3000 --env-file /etc/kortslutning/production.env kortslutning   # keep this file outside the repository
 ```
 
 - **DNS:** point both `ktha.is` and `app.ktha.is` at the container, or at the reverse proxy in front of it.
 - **Reverse proxy:** pass the original `Host` header through unchanged; routing depends on it. Terminate TLS for both names.
 - **`HOSTNAME`:** keep the Dockerfile's `HOSTNAME=0.0.0.0`. With a loopback value such as `127.0.0.1`, Next.js treats the app's internal rewrites as external requests and **every short link returns 404**.
 - **Database:** PostgreSQL 14 or newer. Migrations run automatically at startup, so run a single instance (or make sure only one starts at a time).
+- **Offboarding:** sessions last 7 days and are not extended, so someone removed from the kthais.com Workspace loses access within a week. To revoke access immediately, delete their user row (this also deletes their sessions; their links stay, without an author):
+  `psql "$DB_URL" -c "DELETE FROM \"user\" WHERE email = 'name@kthais.com';"`
 - **Secrets:** generate `BETTER_AUTH_SECRET` once (`openssl rand -base64 32`) and keep it stable; changing it signs everyone out.
 - `.dockerignore` keeps `.env` files out of the image; configuration comes only from the runtime environment.
 
