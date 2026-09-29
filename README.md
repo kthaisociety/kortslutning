@@ -29,31 +29,31 @@ To run the production image locally: `docker compose up --build` (stop `npm run 
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Development server (needs `.env` and the `db` service) |
-| `npm run build` | Production build (`.next/standalone`) |
-| `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
-| `npm test` | Unit and integration tests (integration tests need the `db` service) |
-| `npm run test:unit` / `npm run test:int` | One project only |
-| `npm run smoke` | Starts the built standalone server and checks routing over HTTP (run `npm run build` first) |
-| `npm run db:generate` | Generate a SQL migration from the schema |
-| `npm run db:migrate` | Apply migrations manually (the app also does this at startup) |
+| Command                                  | What it does                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run dev`                            | Development server (needs `.env` and the `db` service)                                      |
+| `npm run build`                          | Production build (`.next/standalone`)                                                       |
+| `npm run lint` / `npm run typecheck`     | ESLint / TypeScript                                                                         |
+| `npm test`                               | Unit and integration tests (integration tests need the `db` service)                        |
+| `npm run test:unit` / `npm run test:int` | One project only                                                                            |
+| `npm run smoke`                          | Starts the built standalone server and checks routing over HTTP (run `npm run build` first) |
+| `npm run db:generate`                    | Generate a SQL migration from the schema                                                    |
+| `npm run db:migrate`                     | Apply migrations manually (the app also does this at startup)                               |
 
 ## Environment variables
 
 The app validates these at startup and refuses to start, naming the problem, if any is missing or invalid.
 
-| Variable | Production example | Purpose |
-|---|---|---|
-| `DB_URL` | `postgres://user:pass@host:5432/kortslutning` | PostgreSQL connection string |
-| `GOOGLE_CLIENT_ID` | `…apps.googleusercontent.com` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | | Google OAuth client secret |
-| `BETTER_AUTH_SECRET` | output of `openssl rand -base64 32` | Signs session cookies (at least 32 characters) |
-| `APP_URL` | `https://app.ktha.is` | Dashboard origin; also the sign-in base URL |
-| `SHORT_URL` | `https://ktha.is` | Short-link origin; used for routing, display, copying and QR codes |
-| `ROOT_REDIRECT_URL` | `https://kthais.com` | Where `https://ktha.is/` (no slug) redirects |
-| `TEST_DB_URL` | | Tests only: the integration-test database |
+| Variable               | Production example                            | Purpose                                                            |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| `DB_URL`               | `postgres://user:pass@host:5432/kortslutning` | PostgreSQL connection string                                       |
+| `GOOGLE_CLIENT_ID`     | `…apps.googleusercontent.com`                 | Google OAuth client ID                                             |
+| `GOOGLE_CLIENT_SECRET` |                                               | Google OAuth client secret                                         |
+| `BETTER_AUTH_SECRET`   | output of `openssl rand -base64 32`           | Signs session cookies (at least 32 characters)                     |
+| `APP_URL`              | `https://app.ktha.is`                         | Dashboard origin; also the sign-in base URL                        |
+| `SHORT_URL`            | `https://ktha.is`                             | Short-link origin; used for routing, display, copying and QR codes |
+| `ROOT_REDIRECT_URL`    | `https://kthais.com`                          | Where `https://ktha.is/` (no slug) redirects                       |
+| `TEST_DB_URL`          |                                               | Tests only: the integration-test database                          |
 
 ## Google Cloud OAuth setup
 
