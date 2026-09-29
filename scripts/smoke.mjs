@@ -78,6 +78,7 @@ async function main() {
     ["short-host root redirects to ROOT_REDIRECT_URL", shortHost, "/", 307, rootRedirect],
     ["slug redirects to its target", shortHost, `/${SLUG}`, 307, TARGET],
     ["slugs are case-insensitive", shortHost, `/${SLUG.toUpperCase()}`, 307, TARGET],
+    ["the www alias redirects like the short host", `www.${shortHost}`, `/${SLUG}`, 307, TARGET],
     ["unknown slug is 404", shortHost, "/no-such-link-xyz", 404, null],
     ["multi-segment path on the short host is 404", shortHost, "/a/b", 404, null],
     ["redirect route is hidden on the app host", appHost, `/r/${SLUG}`, 404, null],
@@ -106,8 +107,8 @@ async function main() {
 
     const { rows } = await pool.query("SELECT click_count FROM links WHERE slug = $1", [SLUG]);
     const clicks = rows[0]?.click_count;
-    console.log(`${clicks === 2 ? "✓" : "✗"} clicks are counted (click_count = ${clicks}, expected 2)`);
-    if (clicks !== 2) failures += 1;
+    console.log(`${clicks === 3 ? "✓" : "✗"} clicks are counted (click_count = ${clicks}, expected 3)`);
+    if (clicks !== 3) failures += 1;
   } finally {
     await pool.query("DELETE FROM links WHERE slug = $1", [SLUG]).catch(() => {});
     await pool.end();

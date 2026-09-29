@@ -77,7 +77,12 @@ are derived from `SHORT_URL` and `APP_URL`.
 | any other host | `/r` or `/r/*` | `notFound` (redirects only resolve on the short host) |
 | any other host | anything else | `next` (normal app) |
 
-Any host other than the short host is treated as the app host, so health checks
+The short host's `www.` form (e.g. `www.ktha.is`) is an alias: it gets exactly
+the short-host rows above, and destinations on it are rejected as loops
+(derived automatically as `shortHostAliases`). `APP_URL` on that `www.` host is
+rejected at startup, so the alias never shadows the dashboard.
+
+Any host other than the short hosts is treated as the app host, so health checks
 and reverse-proxy host variations do not break the app. The proxy matcher
 excludes `/_next/*` so the 404 page's assets load on the short host.
 

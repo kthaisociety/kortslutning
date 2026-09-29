@@ -5,8 +5,8 @@ export type RouteDecision =
   | { type: "notFound" };
 
 export interface RoutingConfig {
-  /** Short-link host (with port, if any), lowercase, e.g. "ktha.is". */
-  shortHost: string;
+  /** Short-link hosts (with port, if any), lowercase, e.g. ["ktha.is", "www.ktha.is"]. */
+  shortHosts: string[];
   rootRedirectUrl: string;
 }
 
@@ -16,11 +16,11 @@ const SINGLE_SEGMENT = /^\/([^/]+)$/;
 
 /**
  * Decides what to do with a request based on its Host header and path.
- * - Short host: "/" → redirect to the main site; "/<slug>" → the redirect page; "/<file.ext>" → static file; else 404.
+ * - Short hosts (ktha.is and its www. alias): "/" → redirect to the main site; "/<slug>" → the redirect page; "/<file.ext>" → static file; else 404.
  * - Any other host is the dashboard; the internal redirect route is hidden there.
  */
 export function routeRequest(host: string | null, pathname: string, config: RoutingConfig): RouteDecision {
-  if (host?.toLowerCase() === config.shortHost) {
+  if (host && config.shortHosts.includes(host.toLowerCase())) {
     if (pathname === "/") return { type: "redirect", location: config.rootRedirectUrl };
     const match = SINGLE_SEGMENT.exec(pathname);
     if (!match) return { type: "notFound" };

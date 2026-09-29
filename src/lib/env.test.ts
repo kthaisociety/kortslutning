@@ -22,8 +22,20 @@ describe("parseEnv", () => {
       appHost: "app.ktha.is",
       shortUrl: "https://ktha.is",
       shortHost: "ktha.is",
+      shortHostAliases: ["www.ktha.is"],
       rootRedirectUrl: "https://kthais.com/",
     });
+  });
+
+  it("derives the www alias of the short host, keeping the port", () => {
+    const env = parseEnv({ ...valid, APP_URL: "http://localhost:3000", SHORT_URL: "http://short.localhost:3000" });
+    expect(env.shortHostAliases).toEqual(["www.short.localhost:3000"]);
+  });
+
+  it("rejects APP_URL on the www form of SHORT_URL, which is always a short-link alias", () => {
+    expect(() => parseEnv({ ...valid, APP_URL: "https://www.ktha.is" })).toThrow(
+      /APP_URL: must not be www\.ktha\.is, the www alias of SHORT_URL/,
+    );
   });
 
   it("normalizes URLs to lowercase origins without trailing slashes", () => {
