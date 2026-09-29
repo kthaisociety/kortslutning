@@ -17,5 +17,19 @@ services:
       timeout: 5s
       retries: 30
 
+  app:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Inside the compose network the database is reachable as "db", not localhost.
+      DB_URL: postgres://kortslutning:kortslutning@db:5432/kortslutning
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db-data:
