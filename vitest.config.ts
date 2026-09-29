@@ -20,6 +20,16 @@ export default defineConfig({
           environment: "node",
         },
       },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["src/**/*.int.test.ts"],
+          environment: "node",
+          globalSetup: ["./src/test/global-setup.ts"],
+          fileParallelism: false,
+        },
+      },
     ],
   },
 });
