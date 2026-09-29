@@ -72,8 +72,8 @@ are derived from `SHORT_URL` and `APP_URL`.
 |---|---|---|
 | short host | `/` | `redirect` 307 → `ROOT_REDIRECT_URL` |
 | short host | `/<segment>` where segment contains no `.` and no further `/` | `rewrite` → `/r/<segment>` |
-| short host | path containing a `.` (e.g. `/favicon.ico`, `/robots.txt`) | `next` (static asset) |
-| short host | anything else (multi-segment paths) | `notFound` |
+| short host | `/<segment>` where segment contains a `.` (e.g. `/favicon.ico`, `/robots.txt`) | `next` (static asset) |
+| short host | anything else (multi-segment paths, including dotted ones) | `notFound` |
 | any other host | `/r` or `/r/*` | `notFound` (redirects only resolve on the short host) |
 | any other host | anything else | `next` (normal app) |
 
@@ -198,12 +198,17 @@ All pages below live on the app host inside an authenticated route group.
 
 ### 5.2 Server actions
 
-`createLink`, `updateLink`, `deleteLink` in `src/lib/links/actions.ts`. Each:
+`createLinkAction`, `updateLinkAction`, `deleteLinkAction` in
+`src/lib/links/actions.ts`. Each:
 
 1. calls `requireUser()`,
-2. validates input with the shared zod schemas,
-3. calls the link repository (`src/lib/links/repository.ts`),
-4. revalidates affected paths.
+2. calls the link service (`src/lib/links/service.ts`), which validates input
+   with the shared rules in `validation.ts` and calls the repository
+   (`src/lib/links/repository.ts`),
+3. revalidates affected paths.
+
+The service layer holds the create/update/delete rules (including random-slug
+retries) so they are integration-testable without the Next.js runtime.
 
 Forms use React's `useActionState` to render field errors inline. No client-side
 validation library.
@@ -286,10 +291,16 @@ Workflows:
   image. Suitable for a single running instance.
 - Manual: `npm run db:migrate` for local use.
 
-### 7.3 Dockerfile changes
+### 7.3 Docker image
 
-The existing `Dockerfile` is kept. The only change: copy the `drizzle/` migrations
-folder into the runner stage so startup migrations can read it.
+- The existing `Dockerfile` is kept unchanged. `next.config.ts` sets
+  `outputFileTracingIncludes: { "/*": ["./drizzle/**/*"] }` so the migrations
+  folder ships inside `.next/standalone`, which the Dockerfile already copies.
+- A new `.dockerignore` excludes `node_modules`, `.next`, `.git` and `.env*`
+  files, so local secrets never enter the build context or image layers.
+- `HOSTNAME` must stay `0.0.0.0` (the Dockerfile default). Verified during
+  planning: when `HOSTNAME` is a loopback IP such as `127.0.0.1`, Next.js treats
+  the proxy's internal rewrites as external requests and every slug returns 404.
 
 ## 8. Error handling
 
@@ -321,6 +332,12 @@ Vitest.
   custom slug, create with random slug, taken-slug result, random-slug collision
   retry, update, delete, resolve-and-increment (count and timestamp change;
   unknown slug returns nothing), search.
+- **Smoke test (`npm run smoke`, `scripts/smoke.mjs`):** starts the real
+  standalone build against Postgres and checks the routing table in 2.1 over HTTP
+  with real `Host` headers (short-host redirect, case-insensitive slug, 404s,
+  `/r/*` blocked on the app host, unauthenticated dashboard redirect to
+  `/login`, click counting). Unit tests of `routeRequest` cannot catch
+  rewrite-level failures such as the `HOSTNAME` issue in 7.3.
 - **Manual checklist in README:** real Google sign-in succeeds with an
   `@kthais.com` account and is rejected for a non-`@kthais.com` account; redirect
   works on the short host; QR download opens and scans.
@@ -331,7 +348,8 @@ Vitest.
 
 `.github/workflows/ci.yml`, on push to `main` and on pull requests:
 `npm ci` → lint → typecheck → test (with a `postgres:18-alpine` service container
-for integration tests) → build.
+for integration tests) → build (with no app environment variables, as in the
+Docker build) → smoke test. A second job builds the Docker image.
 
 ## 11. Documentation deliverables
 
@@ -346,8 +364,8 @@ for integration tests) → build.
    screen to **Internal** when the project belongs to the kthais.com Workspace, and
    where to put the resulting client ID/secret.
 4. Deployment notes: DNS for `ktha.is` and `app.ktha.is` both pointing at the
-   container; reverse proxy must pass the original `Host` header; generating
-   `BETTER_AUTH_SECRET`; migrations run on boot.
+   container; reverse proxy must pass the original `Host` header; keep
+   `HOSTNAME=0.0.0.0`; generating `BETTER_AUTH_SECRET`; migrations run on boot.
 5. The manual test checklist from section 9.
 
 ## 12. Proposed structure
@@ -371,9 +389,12 @@ src/
     routing.ts
     db/{index.ts, schema.ts, auth-schema.ts, migrate.ts}
     auth/{auth.ts, auth-client.ts, domain.ts, require-user.ts}
-    links/{validation.ts, slug.ts, repository.ts, actions.ts, qr.ts}
+    links/{validation.ts, slug.ts, short-url.ts, repository.ts, service.ts, actions.ts, qr.ts}
+  test/                # integration-test database helpers
 drizzle/               # generated SQL migrations
+scripts/smoke.mjs      # standalone-server smoke test
 docker-compose.yaml
+.dockerignore
 .env.example
 .github/workflows/ci.yml
 ```
