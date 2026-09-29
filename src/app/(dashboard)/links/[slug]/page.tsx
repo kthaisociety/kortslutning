@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { DeleteLinkButton } from "@/components/delete-link-button";
 import { EditLinkForm } from "@/components/edit-link-form";
+import { QrCodeCard } from "@/components/qr-code-card";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
@@ -77,6 +78,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[slug]">) {
             <DeleteLinkButton action={deleteLinkAction.bind(null, slug)} label={label} />
           </div>
         </div>
+        <QrCodeCard slug={slug} url={url} />
       </div>
     </div>
   );
